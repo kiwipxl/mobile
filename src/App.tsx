@@ -331,6 +331,7 @@ const MainStackComponent = ({ env }: { env: 'prod' | 'dev' }) => {
                   onPress={async () => {
                     await application?.deviceInterface?.removeAllRawStorageValues();
                     await application?.deviceInterface?.removeAllRawDatabasePayloads();
+                    await application?.deviceInterface?.clearKeychainValue();
                     application?.deinit();
                   }}
                 />

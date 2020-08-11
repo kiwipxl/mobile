@@ -13,3 +13,5 @@ export const Input = styled.TextInput.attrs(({ theme }) => ({
   color: ${({ theme }) => theme.stylekitForegroundColor};
   height: 100%;
 `;
+
+export const BaseText = styled.Text``;
