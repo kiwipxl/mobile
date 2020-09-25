@@ -1,10 +1,15 @@
-import { ChallengeType, ChallengeValue, PrivilegeCredential } from 'snjs';
+import {
+  ChallengePrompt,
+  ChallengeValidation,
+  ChallengeValue,
+  PrivilegeCredential,
+} from 'snjs';
 
 export const findMatchingValueIndex = (
   values: ChallengeValue[],
-  type: ChallengeValue['type']
+  type: ChallengeValue['prompt']['validation']
 ) => {
-  return values.findIndex(arrayValue => type === arrayValue.type);
+  return values.findIndex(arrayValue => type === arrayValue.prompt.validation);
 };
 
 export const findMatchingPrivilegeValueIndex = (
@@ -33,12 +38,12 @@ type ChallengeValueState = {
 };
 type SetChallengeValueState = {
   type: 'setState';
-  valueType: ChallengeValue['type'];
+  valueType: ChallengeValue['prompt']['validation'];
   state: AuthenticationValueStateType;
 };
 type SetChallengeValue = {
   type: 'setValue';
-  valueType: ChallengeValue['type'];
+  valueType: ChallengeValue['prompt']['validation'];
   value: ChallengeValue['value'];
 };
 
@@ -117,7 +122,7 @@ export const authenticationReducer = (
         action.valueType
       );
       tempArray[index] = {
-        type: state.challengeValues[index].type,
+        prompt: state.challengeValues[index].prompt,
         value: action.value,
       };
       return { ...state, challengeValues: tempArray };
@@ -127,88 +132,58 @@ export const authenticationReducer = (
   }
 };
 
-const mapPrivilageCredentialToChallengeType = (
+const mapPrivilageCredentialToChallengeValidation = (
   credential: PrivilegeCredential
 ) => {
   switch (credential) {
     case PrivilegeCredential.AccountPassword:
-      return ChallengeType.AccountPassword;
+      return ChallengeValidation.AccountPassword;
     case PrivilegeCredential.LocalPasscode:
-      return ChallengeType.LocalPasscode;
+      return ChallengeValidation.LocalPasscode;
   }
 };
 
 export const getTitleForPrivilegeLockStateAndType = (
   privilegeValue: PrivilegeLockValue,
   state: AuthenticationValueStateType
-) =>
-  getTitleForStateAndType(
-    {
-      ...privilegeValue,
-      type: mapPrivilageCredentialToChallengeType(privilegeValue.type),
-    },
-    state
+) => {
+  const prompt = new ChallengePrompt(
+    mapPrivilageCredentialToChallengeValidation(privilegeValue.type)
   );
+  return getChallengePromptTitle(prompt, state);
+};
 
 export const getLabelForPrivilegeLockStateAndType = (
   privilegeValue: PrivilegeLockValue,
   state: AuthenticationValueStateType
-) =>
-  getLabelForStateAndType(
-    {
-      ...privilegeValue,
-      type: mapPrivilageCredentialToChallengeType(privilegeValue.type),
-    },
-    state
+) => {
+  const prompt = new ChallengePrompt(
+    mapPrivilageCredentialToChallengeValidation(privilegeValue.type)
   );
+  getChallengePromptSubtitle(prompt, state);
+};
 
-export const getTitleForStateAndType = (
-  challengeValue: ChallengeValue,
+export const getChallengePromptTitle = (
+  prompt: ChallengePrompt,
   state: AuthenticationValueStateType
 ) => {
-  switch (challengeValue.type) {
-    case ChallengeType.AccountPassword: {
-      const title = 'Account Password';
-      switch (state) {
-        case AuthenticationValueStateType.WaitingTurn:
-          return title.concat(' ', '- Waiting.');
-        case AuthenticationValueStateType.Locked:
-          return title.concat(' ', '- Locked.');
-        default:
-          return title;
-      }
-    }
-    case ChallengeType.LocalPasscode: {
-      const title = 'Local Passcode';
-      switch (state) {
-        case AuthenticationValueStateType.WaitingTurn:
-          return title.concat(' ', '- Waiting.');
-        case AuthenticationValueStateType.Locked:
-          return title.concat(' ', '- Locked.');
-        default:
-          return title;
-      }
-    }
-    case ChallengeType.Biometric: {
-      const title = 'Biometrics';
-      switch (state) {
-        case AuthenticationValueStateType.WaitingTurn:
-          return title.concat(' ', '- Waiting.');
-        case AuthenticationValueStateType.Locked:
-          return title.concat(' ', '- Locked.');
-        default:
-          return title;
-      }
-    }
+  const title = prompt.title!;
+  switch (state) {
+    case AuthenticationValueStateType.WaitingTurn:
+      return title.concat(' ', '- Waiting.');
+    case AuthenticationValueStateType.Locked:
+      return title.concat(' ', '- Locked.');
+    default:
+      return title;
   }
 };
 
-export const getLabelForStateAndType = (
-  challengeValue: ChallengeValue,
+export const getChallengePromptSubtitle = (
+  prompt: ChallengePrompt,
   state: AuthenticationValueStateType
 ) => {
-  switch (challengeValue.type) {
-    case ChallengeType.AccountPassword: {
+  switch (prompt.validation) {
+    case ChallengeValidation.AccountPassword: {
       switch (state) {
         case AuthenticationValueStateType.WaitingTurn:
         case AuthenticationValueStateType.WaitingInput:
@@ -223,7 +198,7 @@ export const getLabelForStateAndType = (
           return '';
       }
     }
-    case ChallengeType.LocalPasscode: {
+    case ChallengeValidation.LocalPasscode: {
       switch (state) {
         case AuthenticationValueStateType.WaitingTurn:
         case AuthenticationValueStateType.WaitingInput:
@@ -238,7 +213,7 @@ export const getLabelForStateAndType = (
           return '';
       }
     }
-    case ChallengeType.Biometric: {
+    case ChallengeValidation.Biometric: {
       switch (state) {
         case AuthenticationValueStateType.WaitingTurn:
         case AuthenticationValueStateType.WaitingInput:
@@ -256,6 +231,6 @@ export const getLabelForStateAndType = (
       }
     }
     default:
-      return '';
+      return prompt.title;
   }
 };
