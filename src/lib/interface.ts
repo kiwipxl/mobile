@@ -276,4 +276,8 @@ export class MobileDeviceInterface extends DeviceInterface {
       })
       .catch(() => showAlert());
   }
+
+  async legacy_setRawKeychainValue(value: any) {
+    return Keychain.setKeys(value);
+  }
 }
